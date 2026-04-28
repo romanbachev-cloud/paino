@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, Union
 
 _VENDOR_DIR = Path(__file__).resolve().parent / ".vendor"
 if _VENDOR_DIR.exists():
@@ -18,8 +18,8 @@ try:
 except ModuleNotFoundError:
     mido = None
 
-MidiEvent = dict[str, float | int]
-MidiEventQueue = queue.Queue[MidiEvent]
+MidiEvent = Dict[str, Union[float, int]]
+MidiEventQueue = queue.Queue
 
 
 def _require_mido() -> Any:

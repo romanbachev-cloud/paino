@@ -4,7 +4,7 @@ import json
 import random
 import sys
 from pathlib import Path
-from typing import Iterable
+from typing import Dict, Iterable, List, Union
 
 _VENDOR_DIR = Path(__file__).resolve().parent / ".vendor"
 if _VENDOR_DIR.exists():
@@ -18,7 +18,7 @@ DEFAULT_OUTPUT_DIR = Path(__file__).resolve().parent / "generated_dataset"
 DEFAULT_TEMPO = 500000
 DEFAULT_TICKS_PER_BEAT = 480
 
-ScaleEvent = dict[str, list[int] | float]
+ScaleEvent = Dict[str, Union[List[int], float]]
 
 
 def seconds_to_ticks(

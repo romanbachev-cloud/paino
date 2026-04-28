@@ -14,7 +14,7 @@ import zipfile
 from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Dict, Union
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 VENDOR_DIR = PROJECT_ROOT / ".vendor"
@@ -45,8 +45,8 @@ from hybrid_fusion import HybridScoreFollower
 from midi_to_score import convert_to_score
 from output_dispatcher import ScoreEventDispatcher, TempoTracker
 
-MidiEvent = dict[str, float | int]
-MidiEventQueue = queue.Queue[MidiEvent]
+MidiEvent = Dict[str, Union[float, int]]
+MidiEventQueue = queue.Queue
 PHILHARMONIA_STRINGS_URL = (
     "https://philharmonia-assets.s3-eu-west-1.amazonaws.com/uploads/2020/02/12112005/Strings.zip"
 )
