@@ -1968,6 +1968,10 @@ def infer_local_orchestra_instrument(track_name: str, program: int | None, midi_
     return "violin"
 
 
+def fallback_local_orchestra_instrument(midi_pitch: int) -> str:
+    return infer_local_orchestra_instrument("", None, midi_pitch)
+
+
 class LocalOrchestraSampleBank:
     """Lazy local sample bank for Philharmonia-style orchestra archives."""
 
@@ -2001,7 +2005,11 @@ class LocalOrchestraSampleBank:
         with self._lock:
             candidates = self._sample_index.get(instrument_key)
             if not candidates:
-                raise RuntimeError(f"No local orchestra samples for instrument: {instrument_key}")
+                fallback_key = fallback_local_orchestra_instrument(int(midi_pitch))
+                candidates = self._sample_index.get(fallback_key)
+                if not candidates:
+                    raise RuntimeError(f"No local orchestra samples for instrument: {instrument_key}")
+                instrument_key = fallback_key
 
             target_pitch = int(midi_pitch)
             target_duration = float(max(0.08, min(5.0, duration)))
@@ -2040,6 +2048,14 @@ class LocalOrchestraSampleBank:
                     continue
                 self._sample_index.setdefault(sample.instrument, []).append(sample)
 
+        for sample_path in sorted(self.sample_root.rglob("*.mp3")):
+            if self.cache_dir in sample_path.parents:
+                continue
+            sample = self._parse_sample_file(sample_path)
+            if sample is None:
+                continue
+            self._sample_index.setdefault(sample.instrument, []).append(sample)
+
         if not self._sample_index:
             raise RuntimeError(f"No local orchestra samples found in: {self.sample_root}")
 
@@ -2051,8 +2067,23 @@ class LocalOrchestraSampleBank:
         if len(parts) < 3:
             return None
 
-        instrument = normalize_local_instrument_name(parts[1])
-        stem = Path(member_name).stem
+        instrument = normalize_local_instrument_name(parts[-2])
+        return self._build_sample_descriptor(zip_path, member_name, instrument, Path(member_name).stem)
+
+    def _parse_sample_file(self, sample_path: Path) -> LocalOrchestraSample | None:
+        if not sample_path.name.lower().endswith(".mp3"):
+            return None
+
+        instrument = normalize_local_instrument_name(sample_path.parent.name)
+        return self._build_sample_descriptor(sample_path, sample_path.name, instrument, sample_path.stem)
+
+    def _build_sample_descriptor(
+        self,
+        source_path: Path,
+        member_name: str,
+        instrument: str,
+        stem: str,
+    ) -> LocalOrchestraSample | None:
         tokens = stem.split("_")
         length_index = next(
             (
@@ -2074,7 +2105,7 @@ class LocalOrchestraSampleBank:
         dynamic = tokens[length_index + 1] if length_index + 1 < len(tokens) else "mezzo-forte"
         articulation = tokens[length_index + 2] if length_index + 2 < len(tokens) else "normal"
         return LocalOrchestraSample(
-            zip_path=zip_path,
+            zip_path=source_path,
             member_name=member_name,
             instrument=instrument,
             pitch=sample_pitch,
@@ -2084,6 +2115,8 @@ class LocalOrchestraSampleBank:
         )
 
     def _extract_sample(self, sample: LocalOrchestraSample) -> Path:
+        if sample.zip_path not in self._zip_files:
+            return sample.zip_path
         zip_file = self._zip_files[sample.zip_path]
         destination = self.cache_dir / sample.zip_path.stem / sample.member_name
         if destination.exists():
