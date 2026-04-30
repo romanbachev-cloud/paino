@@ -1,3 +1,6 @@
 numpy
 mido
 pygame-ce
+mido
+numpy
+pygame-ce
