@@ -1,0 +1,7 @@
+pygame-ce 2.5.7 (SDL 2.32.10, Python 3.12.12)
+pygame-ce 2.5.7 (SDL 2.32.10, Python 3.12.12)
+ALSA lib conf.c:4580:(snd_config_update_r) Cannot access file /usr/local/share/alsa/alsa.conf
+ALSA lib seq.c:1011:(snd_seq_open_noupdate) Unknown SEQ default
+pygame-ce 2.5.7 (SDL 2.32.10, Python 3.12.12)
+ALSA lib conf.c:4580:(snd_config_update_r) Cannot access file /usr/local/share/alsa/alsa.conf
+ALSA lib seq.c:1011:(snd_seq_open_noupdate) Unknown SEQ default

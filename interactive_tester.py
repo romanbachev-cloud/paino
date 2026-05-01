@@ -1117,9 +1117,26 @@ def make_piano_sound(
     )
     stereo = np.column_stack((stereo_left, stereo_right))
     fade_out = np.minimum(1.0, (duration - times) / 0.03)
-    stereo *= np.clip(fade_out, 0.0, 1.0)[:, None]
+    fade_curve = np.clip(fade_out, 0.0, 1.0)
+    stereo *= fade_curve[:, None]
     stereo *= 0.23
-    audio = np.int16(np.clip(stereo, -1.0, 1.0) * 32767)
+
+    mixer_config = pygame.mixer.get_init()
+    mixer_channels = int(mixer_config[2]) if mixer_config and len(mixer_config) >= 3 else 2
+    if mixer_channels <= 1:
+        mono_signal = mono * fade_curve * 0.23
+        audio = np.int16(np.clip(mono_signal, -1.0, 1.0) * 32767)
+    elif mixer_channels == 2:
+        audio = np.int16(np.clip(stereo, -1.0, 1.0) * 32767)
+    else:
+        multichannel = np.zeros((stereo.shape[0], mixer_channels), dtype=np.float64)
+        multichannel[:, 0] = stereo[:, 0]
+        multichannel[:, 1] = stereo[:, 1]
+        if mixer_channels > 2:
+            center_fill = (stereo[:, 0] + stereo[:, 1]) * 0.5
+            multichannel[:, 2:] = center_fill[:, None]
+        audio = np.int16(np.clip(multichannel, -1.0, 1.0) * 32767)
+
     sound = pygame.sndarray.make_sound(audio)
     sound.set_volume(0.60)
     return sound
